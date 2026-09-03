@@ -443,39 +443,17 @@ let currentTab = "initials";
 let soundOn = true;
 let audioCtx = null;
 
-// ============ iOS 音訊解鎖 ============
-// Capabara 做法：在 click handler 裡同步建立 AudioContext
-let audioUnlocked = false;
+// ============ 音效 ============
+let audioCtx = null;
 function initAudio() {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch(e) { audioCtx = null; }
   }
-  ensureAudio();
-}
-function ensureAudio() {
-  if (!audioCtx) return false;
-  if (audioCtx.state === "suspended") {
-    try {
-      const p = audioCtx.resume();
-      if (p && p.catch) p.catch(()=>{});
-      return false;
-    } catch(e) { return false; }
-  }
-  return true;
-}
-function unlockAudioOnGesture() {
-  initAudio();
-}
-// 啟動階段就註冊全域手勢監聽，任何觸碰/點擊都會嘗試解鎖音效
-if (typeof document !== "undefined") {
-  ["touchstart", "touchend", "click"].forEach(evt => {
-    document.addEventListener(evt, unlockAudioOnGesture, { passive: true });
-  });
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
 }
 
 // ============ 語音 ============
-// 預載語音清單 (iPad Safari 非同步載入)
 let currentVoice = null;
 function setupVoice() {
   const load = () => {
@@ -493,23 +471,15 @@ if (window.speechSynthesis) {
     setTimeout(setupVoice, 300);
   }
 }
-
-function speak(word) {
-  if (!window.speechSynthesis || !word) return;
+function speak(text) {
+  if (!window.speechSynthesis || !text) return;
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(word);
+  const u = new SpeechSynthesisUtterance(text);
   u.lang = "zh-TW";
   u.rate = 0.5;
   u.pitch = 1.1;
   if (currentVoice) u.voice = currentVoice;
   window.speechSynthesis.speak(u);
-  if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-}
-
-// 注音發音：直接用 speechSynthesis 播注音符號
-function playMoeSound(symbol) {
-  if (!soundOn) return;
-  speak(symbol);
 }
 
 // ============ 產生畫面 ============
@@ -537,8 +507,8 @@ function onPick(item, card) {
   card.classList.remove("popping");
   void card.offsetWidth;
   card.classList.add("popping");
-  bubble.innerHTML = item.z + "（" + item.w + "）";
-  playMoeSound(item.z);
+  document.getElementById("bubble").innerHTML = item.z + "（" + item.w + "）";
+  if (soundOn) speak(item.z);
   updateCount();
 }
 
@@ -578,15 +548,10 @@ function showMessage(msg) {
 // ============ 聲音開關 ============
 const sToggle = document.getElementById("soundToggle");
 sToggle.addEventListener("click", () => {
+  initAudio();
   soundOn = !soundOn;
   sToggle.textContent = soundOn ? "🔊" : "🔇";
-  if (!soundOn) {
-    window.speechSynthesis.cancel();
-  } else {
-    initAudio();
-    window.speechSynthesis.cancel();
-    speak("聲音已開啟");
-  }
+  if (soundOn) speak("聲音已開啟");
 });
 
 // ============ 鍵盤快捷鍵 ============
@@ -975,10 +940,12 @@ function newWriteRound() {
 }
 
 function playRoundSound() {
-  if (currentTab === "tones") {
-    speak(wTarget.w);
-  } else {
-    speak(wTarget.z);
+  if (soundOn) {
+    if (currentTab === "tones") {
+      speak(wTarget.w);
+    } else {
+      speak(wTarget.z);
+    }
   }
 }
 
@@ -1036,13 +1003,13 @@ document.getElementById("writeOpenBtn").addEventListener("click", () => {
 
 wCloseBtn.addEventListener("click", () => {
   writeOverlay.classList.remove("show");
-  speechSynthesis.cancel();
+  window.speechSynthesis.cancel();
 });
 
 writeOverlay.addEventListener("click", (e) => {
   if (e.target === writeOverlay) {
     writeOverlay.classList.remove("show");
-    speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
   }
 });
 
