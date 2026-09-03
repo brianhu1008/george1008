@@ -442,9 +442,6 @@ const TABS = [
 let currentTab = "initials";
 let soundOn = true;
 let audioCtx = null;
-
-// ============ 音效 ============
-let audioCtx = null;
 function initAudio() {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
