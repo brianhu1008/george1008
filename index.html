@@ -455,7 +455,11 @@ let currentVoice = null;
 function setupVoice() {
   const load = () => {
     const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-    currentVoice = voices.find(v => /zh[-_]TW/i.test(v.lang) || /Taiwan/i.test(v.name)) || null;
+    // 優先選台灣中文 → 中文 → 任何中文
+    currentVoice = voices.find(v => /zh[-_]TW/i.test(v.lang))
+      || voices.find(v => /zh[-_]TW/i.test(v.name) || /Taiwan/i.test(v.name))
+      || voices.find(v => /^zh/i.test(v.lang))
+      || null;
   };
   load();
   if (window.speechSynthesis && typeof window.speechSynthesis.onvoiceschanged !== "undefined") {
@@ -473,8 +477,8 @@ function speak(text) {
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "zh-TW";
-  u.rate = 0.5;
-  u.pitch = 1.1;
+  u.rate = 0.7;
+  u.pitch = 1.0;
   if (currentVoice) u.voice = currentVoice;
   window.speechSynthesis.speak(u);
 }
@@ -911,11 +915,17 @@ const wScoreLine = document.getElementById("writeScore");
 const wCloseBtn = document.getElementById("writeCloseBtn");
 const writeOverlay = document.getElementById("writeOverlay");
 
+let wLastIdx = -1;
 function newWriteRound() {
   resetWrite();
   wSubmitted = false;
   const list = DATA[currentTab];
-  const txt = list[Math.floor(Math.random() * list.length)];
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * list.length);
+  } while (idx === wLastIdx && list.length > 1);
+  wLastIdx = idx;
+  const txt = list[idx];
   wTarget = { z: txt.z, w: txt.w };
   // 隱藏答案只顯示音檔提示
   wResult.className = "result-box info";
