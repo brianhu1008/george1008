@@ -991,7 +991,29 @@ document.getElementById("writeOpenBtn").addEventListener("click", () => {
   updateScore();
   writeOverlay.classList.add("show");
   resizeWriteCanvas();
-  newWriteRound();
+  // 直接在 click handler 裡觸發聲音（iPad 要求 speechSynthesis.speak 在使用者手勢內）
+  const list = DATA[currentTab];
+  const idx = Math.floor(Math.random() * list.length);
+  wLastIdx = idx;
+  wTarget = { z: list[idx].z, w: list[idx].w };
+  resetWrite();
+  wSubmitted = false;
+  wResult.className = "result-box info";
+  wResult.textContent = "請聽音，然後在框框裡寫出注音";
+  const prompt = document.querySelector("#writeOverlay .prompt-line");
+  prompt.innerHTML = "🔊 聽聽哪個注音？";
+  wNextBtn.disabled = true;
+  wCheckBtn.disabled = false;
+  setStageEnabled(true);
+  if (soundOn) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(wTarget.w);
+    u.lang = "zh-TW";
+    u.rate = 0.8;
+    u.pitch = 1.0;
+    if (currentVoice) u.voice = currentVoice;
+    window.speechSynthesis.speak(u);
+  }
 });
 
 wCloseBtn.addEventListener("click", () => {
@@ -1006,11 +1028,49 @@ writeOverlay.addEventListener("click", (e) => {
   }
 });
 
-wSpeakBtn.addEventListener("click", playRoundSound);
+wSpeakBtn.addEventListener("click", () => {
+  initAudio();
+  if (soundOn && wTarget) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(wTarget.w);
+    u.lang = "zh-TW";
+    u.rate = 0.8;
+    u.pitch = 1.0;
+    if (currentVoice) u.voice = currentVoice;
+    window.speechSynthesis.speak(u);
+  }
+});
 wUndoBtn.addEventListener("click", undoWrite);
 wResetBtn.addEventListener("click", resetWrite);
 wCheckBtn.addEventListener("click", checkWrite);
-wNextBtn.addEventListener("click", newWriteRound);
+wNextBtn.addEventListener("click", () => {
+  initAudio();
+  resetWrite();
+  wSubmitted = false;
+  const list = DATA[currentTab];
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * list.length);
+  } while (idx === wLastIdx && list.length > 1);
+  wLastIdx = idx;
+  wTarget = { z: list[idx].z, w: list[idx].w };
+  wResult.className = "result-box info";
+  wResult.textContent = "請聽音，然後在框框裡寫出注音";
+  const prompt = document.querySelector("#writeOverlay .prompt-line");
+  prompt.innerHTML = "🔊 聽聽哪個注音？";
+  wNextBtn.disabled = true;
+  wCheckBtn.disabled = false;
+  setStageEnabled(true);
+  if (soundOn) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(wTarget.w);
+    u.lang = "zh-TW";
+    u.rate = 0.8;
+    u.pitch = 1.0;
+    if (currentVoice) u.voice = currentVoice;
+    window.speechSynthesis.speak(u);
+  }
+});
 
 window.addEventListener("resize", () => {
   if (writeOverlay.classList.contains("show")) resizeWriteCanvas();
