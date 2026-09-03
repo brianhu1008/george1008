@@ -477,7 +477,7 @@ function speak(text) {
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "zh-TW";
-  u.rate = 0.7;
+  u.rate = 0.8;
   u.pitch = 1.0;
   if (currentVoice) u.voice = currentVoice;
   window.speechSynthesis.speak(u);
@@ -940,11 +940,7 @@ function newWriteRound() {
 
 function playRoundSound() {
   if (soundOn) {
-    if (currentTab === "tones") {
-      speak(wTarget.w);
-    } else {
-      speak(wTarget.z);
-    }
+    speak(wTarget.w);
   }
 }
 
