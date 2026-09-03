@@ -445,12 +445,33 @@ let audioCtx = null;
 
 // ============ iOS 音訊解鎖 ============
 // Capabara 做法：在 click handler 裡同步建立 AudioContext
+let audioUnlocked = false;
 function initAudio() {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch(e) { audioCtx = null; }
   }
-  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+  ensureAudio();
+}
+function ensureAudio() {
+  if (!audioCtx) return false;
+  if (audioCtx.state === "suspended") {
+    try {
+      const p = audioCtx.resume();
+      if (p && p.catch) p.catch(()=>{});
+      return false;
+    } catch(e) { return false; }
+  }
+  return true;
+}
+function unlockAudioOnGesture() {
+  initAudio();
+}
+// 啟動階段就註冊全域手勢監聽，任何觸碰/點擊都會嘗試解鎖音效
+if (typeof document !== "undefined") {
+  ["touchstart", "touchend", "click"].forEach(evt => {
+    document.addEventListener(evt, unlockAudioOnGesture, { passive: true });
+  });
 }
 
 // ============ 語音 ============
