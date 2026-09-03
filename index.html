@@ -980,14 +980,12 @@ function updateScore() {
 }
 
 document.getElementById("writeOpenBtn").addEventListener("click", () => {
+  initAudio();
   wScore = { ok: 0, total: 0 };
   updateScore();
   writeOverlay.classList.add("show");
-  // 先顯示 overlay 再量測畫布大小（否則 display:none 時 rect 為 0，畫布無法拖曳寫字）
-  requestAnimationFrame(() => {
-    resizeWriteCanvas();
-    newWriteRound();
-  });
+  resizeWriteCanvas();
+  newWriteRound();
 });
 
 wCloseBtn.addEventListener("click", () => {
