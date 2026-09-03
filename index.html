@@ -505,7 +505,7 @@ function onPick(item, card) {
   void card.offsetWidth;
   card.classList.add("popping");
   document.getElementById("bubble").innerHTML = item.z + "（" + item.w + "）";
-  if (soundOn) speak(item.z);
+  if (soundOn) speak(item.w);
   updateCount();
 }
 
@@ -628,7 +628,6 @@ function moveWrite(e) {
 }
 
 function endWrite(e) {
-  if (e && e.preventDefault) e.preventDefault();
   wIsDrawing = false;
   wCurrentStroke = null;
 }
@@ -646,13 +645,6 @@ writeStage.addEventListener("pointerdown", onPointerDown);
 window.addEventListener("pointermove", moveWrite);
 window.addEventListener("pointerup", endWrite);
 window.addEventListener("pointercancel", endWrite);
-writeStage.addEventListener("mousedown", startWrite);
-window.addEventListener("mousemove", moveWrite);
-window.addEventListener("mouseup", endWrite);
-writeStage.addEventListener("touchstart", startWrite, { passive: false });
-window.addEventListener("touchmove", moveWrite, { passive: false });
-window.addEventListener("touchend", endWrite);
-window.addEventListener("touchcancel", endWrite);
 
 function drawSegment() {
   const s = wCurrentStroke;
