@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>注音小學堂</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Microsoft JhengHei", "PMingLiU", "Noto Sans TC", sans-serif;
+    background: linear-gradient(160deg, #a8e6ff 0%, #d6f5ff 50%, #fff6d8 100%);
+    min-height: 100vh;
+    padding: 20px;
+    user-select: none;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  .header h1 {
+    font-size: clamp(32px, 6vw, 52px);
+    color: #ff6b6b;
+    text-shadow: 2px 2px 0 #fff, 0 0 8px rgba(255,255,255,0.6);
+    letter-spacing: 4px;
+  }
+
+  .subtitle {
+    font-size: clamp(14px, 2.5vw, 20px);
+    color: #777;
+    margin-top: 6px;
+  }
+
+  /* Tab / category buttons */
+  .tab-bar {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 16px 0 20px;
+  }
+
+  .tab-btn {
+    font-size: 22px;
+    font-family: inherit;
+    padding: 12px 26px;
+    border: none;
+    border-radius: 40px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+    transition: transform 0.12s, box-shadow 0.12s;
+    letter-spacing: 2px;
+  }
+
+  .tab-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+  }
+
+  .tab-btn.active {
+    outline: 4px solid #fff;
+    outline-offset: 2px;
+  }
+
+  /* Main grid of bopomofo cards */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 14px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background: rgba(255,255,255,0.75);
+    border-radius: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 14px 8px;
+    cursor: pointer;
+    text-align: center;
+    border: 3px solid rgba(0,0,0,0.06);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.12);
+    transition: transform 0.12s, box-shadow 0.12s, background 0.2s;
+    position: relative;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 9px 0 rgba(0,0,0,0.12);
+  }
+
+  .card:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.12);
+  }
+
+  .card.popping {
+    animation: pop 0.4s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+  }
+
+  .card .symbol {
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.2;
+    color: #333;
+  }
+
+  .card .word {
+    font-size: clamp(18px, 2.5vw, 26px);
+    margin-top: 6px;
+    color: #555;
+  }
+
+  /* tone cards special color */
+  .card.tone {
+    background: #fff3f0;
+    border-color: #ffb3a7;
+  }
+
+  .speaker-hint {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 16px;
+    opacity: 0.4;
+  }
+
+  /* Big speech bubble */
+  .bubble {
+    text-align: center;
+    font-size: clamp(20px, 3.5vw, 32px);
+    color: #555;
+    min-height: 48px;
+    padding: 6px;
+    font-weight: bold;
+  }
+
+  .message-row {
+    max-width: 1000px;
+    margin: 0 auto 12px;
+    text-align: center;
+  }
+
+  .message {
+    display: inline-block;
+    background: #fff;
+    color: #ff6b6b;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 8px 20px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  /* ✏️ 手寫模式按鈕 (加入 tab-bar) */
+  .write-cta {
+    display: flex;
+    justify-content: center;
+    margin: 4px 0 18px;
+  }
+
+  .write-open-btn {
+    font-family: inherit;
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #ff9966, #ff5e62);
+    border: none;
+    border-radius: 40px;
+    padding: 14px 36px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .write-open-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+  }
+
+  /* 手寫 overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 40, 60, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 16px;
+  }
+
+  .overlay.show { display: flex; }
+
+  .write-panel {
+    background: #fff;
+    border-radius: 24px;
+    padding: 20px;
+    width: min(560px, 94vw);
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 14px 50px rgba(0,0,0,0.4);
+    text-align: center;
+    position: relative;
+  }
+
+  .write-panel h2 {
+    font-size: 26px;
+    color: #ff5e62;
+    margin-bottom: 4px;
+  }
+
+  .write-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 26px;
+    cursor: pointer;
+    color: #aaa;
+  }
+
+  .write-close:hover { color: #ff5e62; }
+
+  .prompt-line {
+    font-size: 18px;
+    color: #666;
+    margin: 6px 0;
+    min-height: 26px;
+  }
+
+  .prompt-line .target {
+    font-size: 30px;
+    font-weight: bold;
+    color: #ff5e62;
+  }
+
+  .write-stage {
+    background: #fffdf8;
+    border: 4px dashed #ffc9a9;
+    border-radius: 20px;
+    margin: 12px auto;
+    width: min(420px, 100%);
+    height: 420px;
+    position: relative;
+    overflow: hidden;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .write-stage canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .stage-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    font-size: 16px;
+    color: #bbb;
+    pointer-events: none;
+  }
+
+  .write-controls {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 14px 0 6px;
+  }
+
+  .wbtn {
+    font-family: inherit;
+    font-size: 19px;
+    font-weight: bold;
+    border: none;
+    border-radius: 30px;
+    padding: 11px 22px;
+    cursor: pointer;
+    color: #fff;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .wbtn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.15); }
+  .wbtn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; }
+
+  .wbtn.primary { background: #4facfe; }
+  .wbtn.speak   { background: #38c172; }
+  .wbtn.undo    { background: #fab917; color: #333; }
+  .wbtn.reset   { background: #f06595; }
+  .wbtn.next    { background: #8b5cf6; }
+
+  .result-box {
+    font-size: 22px;
+    font-weight: bold;
+    min-height: 30px;
+    margin: 6px 0;
+  }
+
+  .result-box.ok   { color: #38c172; }
+  .result-box.bad  { color: #f06595; }
+  .result-box.info { color: #666; }
+
+  .score-line { font-size: 17px; color: #888; margin-top: 4px; }
+
+  @media (max-width: 600px) {
+    .write-stage { height: 300px; }
+  }
+
+  /* Sound button */
+  .sound-toggle {
+    position: fixed;
+    top: 16px;
+    right: 18px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: none;
+    font-size: 26px;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 10;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 22px;
+    color: #999;
+    font-size: 14px;
+  }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 14px; }
+    .card .symbol { font-size: 30px; }
+    .card .word { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="sound-toggle" id="soundToggle">🔊</button>
+
+<div class="header">
+  <h1>注音小學堂</h1>
+  <div class="subtitle">點一點，聽一聽，學注音真開心！</div>
+</div>
+
+<div class="tab-bar" id="tabBar"></div>
+
+<div class="write-cta">
+  <button class="write-open-btn" id="writeOpenBtn">✏️ 聽音寫字</button>
+</div>
+
+<!-- 手寫聽寫 overlay -->
+<div class="overlay" id="writeOverlay">
+  <div class="write-panel">
+    <button class="write-close" id="writeCloseBtn">✕</button>
+    <h2>✏️ 聽音寫字</h2>
+    <div class="prompt-line">聽聽這個音，把它寫下來！</div>
+    <div class="result-box info" id="writeResult"></div>
+    <div class="write-stage" id="writeStage">
+      <canvas id="writeCanvas"></canvas>
+      <div class="stage-hint">在這裡寫字</div>
+    </div>
+    <div class="score-line" id="writeScore">對 0 題</div>
+    <div class="write-controls">
+      <button class="wbtn speak"   id="wSpeak">🔊 再聽一次</button>
+      <button class="wbtn undo"    id="wUndo">↩️ 上一步</button>
+      <button class="wbtn reset"   id="wReset">🗑️ 重寫</button>
+      <button class="wbtn primary" id="wCheck">✅ 送出</button>
+      <button class="wbtn next"    id="wNext">➡️ 下一題</button>
+    </div>
+  </div>
+</div>
+
+<div class="bubble" id="bubble">👆 點上面的卡片，聽聽看怎麼唸！</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="message-row">
+  <div class="message" id="countMsg"></div>
+</div>
+
+<footer>點卡片或按鍵盤（1-9）都可以玩喔！</footer>
+
+<script>
+// ============ 注音資料 ============
+// 每個注音對應一個可發音的示範字
+const DATA = {
+  initials: [
+    { z: "ㄅ", w: "爸", n: 1 }, { z: "ㄆ", w: "葡", n: 2 }, { z: "ㄇ", w: "媽", n: 3 },
+    { z: "ㄈ", w: "飯", n: 4 }, { z: "ㄉ", w: "大", n: 5 }, { z: "ㄊ", w: "糖", n: 6 },
+    { z: "ㄋ", w: "奶", n: 7 }, { z: "ㄌ", w: "龍", n: 8 }, { z: "ㄍ", w: "狗", n: 9 },
+    { z: "ㄎ", w: "口", n: 10 }, { z: "ㄏ", w: "花", n: 11 }, { z: "ㄐ", w: "雞", n: 12 },
+    { z: "ㄑ", w: "氣", n: 13 }, { z: "ㄒ", w: "洗", n: 14 }, { z: "ㄓ", w: "豬", n: 15 },
+    { z: "ㄔ", w: "吃", n: 16 }, { z: "ㄕ", w: "書", n: 17 }, { z: "ㄖ", w: "日", n: 18 },
+    { z: "ㄗ", w: "足", n: 19 }, { z: "ㄘ", w: "草", n: 20 }, { z: "ㄙ", w: "三", n: 21 }
+  ],
+  finals: [
+    { z: "ㄚ", w: "阿", n: 22 }, { z: "ㄛ", w: "哦", n: 23 }, { z: "ㄜ", w: "鵝", n: 24 },
+    { z: "ㄝ", w: "妹", n: 25 }, { z: "ㄞ", w: "愛", n: 26 }, { z: "ㄟ", w: "妹", n: 27 },
+    { z: "ㄠ", w: "貓", n: 28 }, { z: "ㄡ", w: "狗", n: 29 }, { z: "ㄢ", w: "安", n: 30 },
+    { z: "ㄣ", w: "恩", n: 31 }, { z: "ㄤ", w: "王", n: 32 }, { z: "ㄥ", w: "風", n: 33 },
+    { z: "ㄦ", w: "兒", n: 34 }, { z: "ㄧ", w: "衣", n: 35 }, { z: "ㄨ", w: "五", n: 36 },
+    { z: "ㄩ", w: "魚", n: 37 }
+  ],
+  tones: [
+    { z: "ˉ", w: "衣", kind: "1" },
+    { z: "ˊ", w: "姨", kind: "2" },
+    { z: "ˇ", w: "椅", kind: "3" },
+    { z: "ˋ", w: "意", kind: "4" },
+    { z: "˙", w: "的", kind: "5" }
+  ]
+};
+
+const TABS = [
+  { key: "initials", label: "🔤 聲母", color: "#4facfe", bg: "#4facfe" },
+  { key: "finals",   label: "🔡 韻母", color: "#43e97b", bg: "#38c172" },
+  { key: "tones",    label: "🎵 聲調", color: "#fa709a", bg: "#f06595" }
+];
+
+let currentTab = "initials";
+let soundOn = true;
+let audioCtx = null;
+
+// ============ iOS 音訊解鎖 ============
+// Capabara 做法：在 click handler 裡同步建立 AudioContext
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { audioCtx = null; }
+  }
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+}
+
+// ============ 語音 ============
+// 預載語音清單 (iPad Safari 非同步載入)
+let currentVoice = null;
+function setupVoice() {
+  const load = () => {
+    const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+    currentVoice = voices.find(v => /zh[-_]TW/i.test(v.lang) || /Taiwan/i.test(v.name)) || null;
+  };
+  load();
+  if (window.speechSynthesis && typeof window.speechSynthesis.onvoiceschanged !== "undefined") {
+    window.speechSynthesis.onvoiceschanged = load;
+  }
+}
+if (window.speechSynthesis) {
+  setupVoice();
+  if (typeof window.speechSynthesis.onvoiceschanged === "undefined") {
+    setTimeout(setupVoice, 300);
+  }
+}
+
+function speak(word) {
+  if (!window.speechSynthesis || !word) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = "zh-TW";
+  u.rate = 0.5;
+  u.pitch = 1.1;
+  if (currentVoice) u.voice = currentVoice;
+  window.speechSynthesis.speak(u);
+  if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+}
+
+// 注音發音：直接用 speechSynthesis 播注音符號
+function playMoeSound(symbol) {
+  if (!soundOn) return;
+  speak(symbol);
+}
+
+// ============ 產生畫面 ============
+function createGrid() {
+  const grid = document.getElementById("grid");
+  const bubble = document.getElementById("bubble");
+  grid.innerHTML = "";
+  const list = DATA[currentTab];
+  list.forEach((item, idx) => {
+    const card = document.createElement("div");
+    card.className = "card" + (currentTab === "tones" ? " tone" : "");
+    card.innerHTML =
+      '<span class="speaker-hint">🔊</span>' +
+      '<div class="symbol">' + item.z + '</div>' +
+      '<div class="word">' + item.w + '</div>';
+    card.addEventListener("click", () => {
+      onPick(item, card);
+    });
+    grid.appendChild(card);
+  });
+}
+
+function onPick(item, card) {
+  initAudio();
+  card.classList.remove("popping");
+  void card.offsetWidth;
+  card.classList.add("popping");
+  bubble.innerHTML = item.z + "（" + item.w + "）";
+  playMoeSound(item.z);
+  updateCount();
+}
+
+// ============ 已認識計數 ============
+function updateCount() {
+  document.getElementById("countMsg").textContent = "目前認識了 " + DATA[currentTab].length + " 個注音！";
+}
+
+// ============ Tab 切換 ============
+function buildTabs() {
+  const bar = document.getElementById("tabBar");
+  bar.innerHTML = "";
+  TABS.forEach(tab => {
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (tab.key === currentTab ? " active" : "");
+    btn.textContent = tab.label;
+    btn.style.background = tab.bg;
+    btn.addEventListener("click", () => switchTab(tab.key));
+    bar.appendChild(btn);
+  });
+}
+
+function switchTab(key) {
+  currentTab = key;
+  buildTabs();
+  createGrid();
+  updateCount();
+  initWriteCandidates();
+  document.getElementById("bubble").innerHTML = "👆 點卡片，聽聽看怎麼唸！";
+}
+
+// ============ 提示訊息 ============
+function showMessage(msg) {
+  document.getElementById("bubble").innerHTML = msg;
+}
+
+// ============ 聲音開關 ============
+const sToggle = document.getElementById("soundToggle");
+sToggle.addEventListener("click", () => {
+  soundOn = !soundOn;
+  sToggle.textContent = soundOn ? "🔊" : "🔇";
+  if (!soundOn) {
+    window.speechSynthesis.cancel();
+  } else {
+    initAudio();
+    window.speechSynthesis.cancel();
+    speak("聲音已開啟");
+  }
+});
+
+// ============ 鍵盤快捷鍵 ============
+document.addEventListener("keydown", (e) => {
+  const num = parseInt(e.key, 10);
+  if (num >= 1 && num <= 9 && "speechSynthesis" in window) {
+    const list = DATA[currentTab];
+    const card = document.querySelectorAll(".card")[num - 1];
+    if (card && list[num - 1]) {
+      card.click();
+    }
+  }
+});
+
+// ============ ✏️ 聽音寫字（離線手寫辨識） ============
+
+// --- 手寫畫布狀態 ---
+const writeStage = document.getElementById("writeStage");
+const writeCanvas = document.getElementById("writeCanvas");
+const wctx = writeCanvas.getContext("2d");
+
+let wTarget = null;        // 目前題目的目標注音 {z,w}
+let wStrokes = [];         // 收集的筆畫；每筆 = 點陣列 [{x,y}]
+let wCurrentStroke = null; // 正在寫的筆畫
+let wIsDrawing = false;
+let wSubmitted = false;    // 本題是否已送出/結束
+let wScore = { ok: 0, total: 0 };
+
+function resizeWriteCanvas() {
+  const rect = writeStage.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  writeCanvas.width = rect.width * dpr;
+  writeCanvas.height = rect.height * dpr;
+  wctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  wctx.lineCap = "round";
+  wctx.lineJoin = "round";
+  redrawWrite();
+  initWriteCandidates();
+}
+
+function stagePoint(e) {
+  const rect = writeCanvas.getBoundingClientRect();
+  const t = (e.touches && e.touches[0]) || e;
+  return {
+    x: t.clientX - rect.left,
+    y: t.clientY - rect.top
+  };
+}
+
+function ensureWriteCanvas() {
+  // 某些時序下 overlay 剛顯示、畫布尺寸可能還是 0，重設一次避免畫不出來
+  const r = writeStage.getBoundingClientRect();
+  if (r.width > 0 && (writeCanvas.width === 0 || writeCanvas.height === 0)) {
+    resizeWriteCanvas();
+  }
+}
+
+function startWrite(e) {
+  e.preventDefault();
+  if (wSubmitted) return;
+  ensureWriteCanvas();
+  wIsDrawing = true;
+  const p = stagePoint(e);
+  wCurrentStroke = [p];
+  wStrokes.push(wCurrentStroke);
+  drawPoint(p);
+}
+
+function moveWrite(e) {
+  if (!wIsDrawing) return;
+  e.preventDefault();
+  const p = stagePoint(e);
+  const last = wCurrentStroke[wCurrentStroke.length - 1];
+  if (last && last.x === p.x && last.y === p.y) return;
+  wCurrentStroke.push(p);
+  drawLine(last, p);
+}
+
+function endWrite(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  wIsDrawing = false;
+  wCurrentStroke = null;
+}
+
+function onPointerDown(e) {
+  if (writeStage.setPointerCapture && e.pointerId != null) {
+    try { writeStage.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+  startWrite(e);
+}
+
+// 統一處理滑鼠 / 觸控 / Pointer 事件，並把移動/放開綁到 window，
+// 讓滑鼠拖出畫布時不會斷線或遺失筆跡
+writeStage.addEventListener("pointerdown", onPointerDown);
+window.addEventListener("pointermove", moveWrite);
+window.addEventListener("pointerup", endWrite);
+window.addEventListener("pointercancel", endWrite);
+writeStage.addEventListener("mousedown", startWrite);
+window.addEventListener("mousemove", moveWrite);
+window.addEventListener("mouseup", endWrite);
+writeStage.addEventListener("touchstart", startWrite, { passive: false });
+window.addEventListener("touchmove", moveWrite, { passive: false });
+window.addEventListener("touchend", endWrite);
+window.addEventListener("touchcancel", endWrite);
+
+function drawSegment() {
+  const s = wCurrentStroke;
+  if (s.length < 2) return;
+  wctx.strokeStyle = "#333";
+  wctx.lineWidth = 6;
+  for (let i = 1; i < s.length; i++) {
+    drawLine(s[i - 1], s[i]);
+  }
+}
+
+function drawLine(a, b) {
+  wctx.beginPath();
+  wctx.moveTo(a.x, a.y);
+  wctx.lineTo(b.x, b.y);
+  wctx.stroke();
+}
+
+function drawPoint(p) {
+  wctx.beginPath();
+  wctx.arc(p.x, p.y, wctx.lineWidth / 2, 0, Math.PI * 2);
+  wctx.fillStyle = "#333";
+  wctx.fill();
+}
+
+function redrawWrite() {
+  wctx.clearRect(0, 0, writeStage.clientWidth, writeStage.clientHeight);
+  wctx.strokeStyle = "#333";
+  wctx.lineWidth = 6;
+  wctx.lineCap = "round";
+  wctx.lineJoin = "round";
+  wStrokes.forEach(stroke => {
+    if (stroke.length < 2) return;
+    wctx.beginPath();
+    wctx.moveTo(stroke[0].x, stroke[0].y);
+    for (let i = 1; i < stroke.length; i++) wctx.lineTo(stroke[i].x, stroke[i].y);
+    wctx.stroke();
+  });
+}
+
+function undoWrite() {
+  if (wSubmitted) return;
+  wStrokes.pop();
+  wCurrentStroke = null;
+  redrawWrite();
+}
+
+function resetWrite() {
+  wStrokes = [];
+  wCurrentStroke = null;
+  redrawWrite();
+}
+
+// --- 離線 bitmap 手寫辨識引擎 ---
+// 雙重比對：1) 像素重疊（Jaccard，可加權的位移對齊）2) 結構特徵（寬高比、8 帶行列投影、重心、密度）
+const WGRID = 64;
+const FEAT_BANDS = 8;
+const initCanvas = document.createElement("canvas");
+initCanvas.width = WGRID;
+initCanvas.height = WGRID;
+const ictx = initCanvas.getContext("2d");
+const candCanvas = document.createElement("canvas");
+candCanvas.width = WGRID;
+candCanvas.height = WGRID;
+const cctx = candCanvas.getContext("2d");
+
+let writeCandidates = {}; // key: z(string) -> { mask, feat }
+
+function initWriteCandidates() {
+  writeCandidates = {};
+  const list = DATA[currentTab];
+  list.forEach(item => {
+    const mask = renderSymbolGrid(item.z);
+    writeCandidates[item.z] = { mask: mask, feat: extractFeatures(mask) };
+  });
+}
+
+// 把一個符號以標準字型畫成 WGRID x WGRID 二值網格（自動加邊距、置中）
+function renderSymbolGrid(symbol) {
+  const s = WGRID;
+  ictx.clearRect(0, 0, s, s);
+  const fontSize = s * 0.85;
+  ictx.font = "800 " + fontSize + "px \"Microsoft JhengHei\", PMingLiU, sans-serif";
+  ictx.textAlign = "center";
+  ictx.textBaseline = "middle";
+  ictx.fillStyle = "#000";
+  ictx.strokeStyle = "#000";
+  ictx.lineWidth = 6;
+  ictx.lineJoin = "round";
+  ictx.lineCap = "round";
+  ictx.strokeText(symbol, s / 2, s / 2);
+  ictx.fillText(symbol, s / 2, s / 2);
+  const data = ictx.getImageData(0, 0, s, s).data;
+  const g = new Uint8Array(s * s);
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      if (data[(y * s + x) * 4 + 3] > 30) g[y * s + x] = 1;
+    }
+  }
+  return g;
+}
+
+// 結構特徵：寬高比、8 個橫帶/直帶墨量比例、重心、密度（都對 bounding box 正規化）
+function extractFeatures(mask) {
+  const s = WGRID;
+  const fb = FEAT_BANDS;
+  let minX = s, minY = s, maxX = -1, maxY = -1, tot = 0;
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const i = y * s + x;
+      if (mask[i]) {
+        tot++;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (!tot) return null;
+  const bw = maxX - minX + 1, bh = maxY - minY + 1;
+  const rows = new Array(fb).fill(0), cols = new Array(fb).fill(0);
+  let cx = 0, cy = 0;
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const i = y * s + x;
+      if (!mask[i]) continue;
+      rows[Math.floor((y - minY) * fb / bh)]++;
+      cols[Math.floor((x - minX) * fb / bw)]++;
+      cx += x - minX;
+      cy += y - minY;
+    }
+  }
+  for (let i = 0; i < fb; i++) { rows[i] /= tot; cols[i] /= tot; }
+  return {
+    aspect: bw / bh,
+    rows: rows,
+    cols: cols,
+    cxN: cx / tot / bw,
+    cyN: cy / tot / bh,
+    density: tot / (bw * bh)
+  };
+}
+
+// 結構特徵相似度：[0,1]
+function featSimilarity(a, b) {
+  if (!a || !b) return 0;
+  const ar = Math.min(a.aspect, b.aspect) / Math.max(a.aspect, b.aspect);
+  let dRows = 0, dCols = 0;
+  for (let i = 0; i < FEAT_BANDS; i++) {
+    dRows += Math.abs(a.rows[i] - b.rows[i]);
+    dCols += Math.abs(a.cols[i] - b.cols[i]);
+  }
+  const rowSim = 1 - dRows / 2;
+  const colSim = 1 - dCols / 2;
+  const cSim = 1 - (Math.abs(a.cyN - b.cyN) + Math.abs(a.cxN - b.cxN)) / 2;
+  const dSim = 1 - Math.abs(a.density - b.density) / Math.max(a.density, b.density, 1e-6);
+  return 0.32 * ar + 0.26 * rowSim + 0.2 * colSim + 0.14 * cSim + 0.08 * dSim;
+}
+
+// 手寫筆跡 → WGRID 二值遮罩 (線段內插 + dilation 加粗以容忍粗糙)
+function strokesToMask() {
+  const s = WGRID;
+  const mask = new Uint8Array(s * s);
+  const xs = [], ys = [];
+  wStrokes.forEach(st => st.forEach(p => { xs.push(p.x); ys.push(p.y); }));
+  if (xs.length === 0) return mask;
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const w = maxX - minX || 1, h = maxY - minY || 1;
+  const scale = Math.min((s * 0.72) / w, (s * 0.72) / h);
+  const offX = (s - w * scale) / 2 - minX * scale;
+  const offY = (s - h * scale) / 2 - minY * scale;
+  const r = scale > 0.45 ? 2 : 1;
+
+  function plot(px, py) {
+    const ix = Math.round(px), iy = Math.round(py);
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const X = ix + dx, Y = iy + dy;
+      if (X >= 0 && X < s && Y >= 0 && Y < s) mask[Y * s + X] = 1;
+    }
+  }
+
+  wStrokes.forEach(st => {
+    for (let i = 0; i < st.length; i++) {
+      const p = st[i];
+      const x = p.x * scale + offX, y = p.y * scale + offY;
+      if (i === 0) { plot(x, y); continue; }
+      const prev = st[i - 1];
+      const px0 = prev.x * scale + offX, py0 = prev.y * scale + offY;
+      const dist = Math.hypot(x - px0, y - py0);
+      const steps = Math.max(1, Math.ceil(dist / 0.8));
+      for (let t = 1; t <= steps; t++) {
+        plot(px0 + (x - px0) * t / steps, py0 + (y - py0) * t / steps);
+      }
+    }
+  });
+  return mask;
+}
+
+// 像素重疊相似度：交集 / 聯集（Jaccard），做位移對齊掃描
+function bestOverlap(mask, cand) {
+  const s = WGRID;
+  const candBits = [];
+  for (let y = 0; y < s; y++) {
+    const row = y * s;
+    for (let x = 0; x < s; x++) {
+      if (cand[row + x]) candBits.push(x, y);
+    }
+  }
+  let maskCount = 0;
+  for (let i = 0; i < mask.length; i++) if (mask[i]) maskCount++;
+  if (candBits.length === 0) return 0;
+  let best = 0;
+  const R = 4;
+  for (let dy = -R; dy <= R; dy++) {
+    for (let dx = -R; dx <= R; dx++) {
+      let inter = 0;
+      for (let k = 0; k < candBits.length; k += 2) {
+        const sx = candBits[k] + dx, sy = candBits[k + 1] + dy;
+        if (sx >= 0 && sx < s && sy >= 0 && sy < s && mask[sy * s + sx]) inter++;
+      }
+      const union = candBits.length / 2 + maskCount - inter;
+      const sim = union ? inter / union : 0;
+      if (sim > best) best = sim;
+    }
+  }
+  return best;
+}
+
+// 主辨識：回傳 [{z,w,score}] 由高到低
+function recognize() {
+  const mask = strokesToMask();
+  let hasInk = false;
+  for (let i = 0; i < mask.length; i++) if (mask[i]) { hasInk = true; break; }
+  if (!hasInk) return null;
+
+  const handFeat = extractFeatures(mask);
+  const keys = Object.keys(writeCandidates);
+  if (keys.length === 0) return null;
+
+  const results = keys.map(k => {
+    const c = writeCandidates[k];
+    const overlap = bestOverlap(mask, c.mask);
+    const fsim = featSimilarity(handFeat, c.feat);
+    return {
+      z: k,
+      w: (DATA[currentTab].find(it => it.z === k) || {}).w || "",
+      score: 0.55 * overlap + 0.45 * fsim
+    };
+  });
+  results.sort((p, q) => q.score - p.score);
+  return results;
+}
+
+// --- 聽音寫字流程 ---
+const wSpeakBtn = document.getElementById("wSpeak");
+const wUndoBtn = document.getElementById("wUndo");
+const wResetBtn = document.getElementById("wReset");
+const wCheckBtn = document.getElementById("wCheck");
+const wNextBtn = document.getElementById("wNext");
+const wResult = document.getElementById("writeResult");
+const wScoreLine = document.getElementById("writeScore");
+const wCloseBtn = document.getElementById("writeCloseBtn");
+const writeOverlay = document.getElementById("writeOverlay");
+
+function newWriteRound() {
+  resetWrite();
+  wSubmitted = false;
+  const list = DATA[currentTab];
+  const txt = list[Math.floor(Math.random() * list.length)];
+  wTarget = { z: txt.z, w: txt.w };
+  // 隱藏答案只顯示音檔提示
+  wResult.className = "result-box info";
+  wResult.textContent = "請聽音，然後在框框裡寫出注音";
+  const prompt = document.querySelector("#writeOverlay .prompt-line");
+  prompt.innerHTML = "🔊 聽聽哪個注音？";
+  playRoundSound();
+  wNextBtn.disabled = true;
+  wCheckBtn.disabled = false;
+  setStageEnabled(true);
+}
+
+function playRoundSound() {
+  if (currentTab === "tones") {
+    speak(wTarget.w);
+  } else {
+    speak(wTarget.z);
+  }
+}
+
+function setStageEnabled(on) {
+  const p = document.querySelector("#writeOverlay .write-stage");
+  p.style.cursor = on ? "crosshair" : "not-allowed";
+  wUndoBtn.disabled = !on;
+  wResetBtn.disabled = !on;
+}
+
+function checkWrite() {
+  if (wSubmitted) return;
+  const results = recognize();
+  if (results === null) {
+    wResult.className = "result-box bad";
+    wResult.textContent = "還沒寫東西耶～先在框框裡寫下來吧！";
+    return;
+  }
+  const top = results[0];
+  const ok = top.z === wTarget.z;
+  wScore.total++;
+  if (ok) wScore.ok++;
+  wSubmitted = true;
+  wCheckBtn.disabled = true;
+  setStageEnabled(false);
+  const prompt = document.querySelector("#writeOverlay .prompt-line");
+  prompt.innerHTML = "正確答案是：<span class='target'>" + wTarget.z + "</span>（" + wTarget.w + "）";
+  if (ok) {
+    wResult.className = "result-box ok";
+    wResult.textContent = "🎉 答對了！好棒！";
+    speak("答對了");
+  } else {
+    wResult.className = "result-box bad";
+    wResult.textContent = "猜測是「" + top.z + "」，再試一次喔！正確是「"+ wTarget.z +"」";
+    speak("答錯了，正確是，" + wTarget.w);
+  }
+  wNextBtn.disabled = false;
+  updateScore();
+}
+
+function updateScore() {
+  wScoreLine.textContent = "對 " + wScore.ok + " / " + wScore.total + " 題";
+}
+
+document.getElementById("writeOpenBtn").addEventListener("click", () => {
+  wScore = { ok: 0, total: 0 };
+  updateScore();
+  writeOverlay.classList.add("show");
+  // 先顯示 overlay 再量測畫布大小（否則 display:none 時 rect 為 0，畫布無法拖曳寫字）
+  requestAnimationFrame(() => {
+    resizeWriteCanvas();
+    newWriteRound();
+  });
+});
+
+wCloseBtn.addEventListener("click", () => {
+  writeOverlay.classList.remove("show");
+  speechSynthesis.cancel();
+});
+
+writeOverlay.addEventListener("click", (e) => {
+  if (e.target === writeOverlay) {
+    writeOverlay.classList.remove("show");
+    speechSynthesis.cancel();
+  }
+});
+
+wSpeakBtn.addEventListener("click", playRoundSound);
+wUndoBtn.addEventListener("click", undoWrite);
+wResetBtn.addEventListener("click", resetWrite);
+wCheckBtn.addEventListener("click", checkWrite);
+wNextBtn.addEventListener("click", newWriteRound);
+
+window.addEventListener("resize", () => {
+  if (writeOverlay.classList.contains("show")) resizeWriteCanvas();
+});
+
+// ============ 初始化 ============
+buildTabs();
+createGrid();
+updateCount();
+
+// 錯誤兜底：任何 JS 錯誤都顯示出來，方便在真實環境排查
+window.addEventListener("error", (e) => {
+  const msg = (e.message || "") + (e.filename ? " @ " + e.filename.split(/[\\/]/).pop() : "");
+  const b = document.getElementById("bubble");
+  if (b) b.innerHTML = "⚠️ 發生錯誤：" + msg;
+});
+
+</script>
+</body>
+</html>
